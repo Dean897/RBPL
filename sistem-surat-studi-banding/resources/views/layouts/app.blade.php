@@ -56,7 +56,8 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link {{ request()->routeIs('sekretariat.disposisi.tracking') ? 'active' : '' }}"
+                            href="{{ route('sekretariat.disposisi.tracking') }}">
                             <i class="fas fa-file-alt me-2"></i> Disposisi
                         </a>
                     </li>
@@ -99,6 +100,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    @yield('scripts')
 </body>
 
 </html>
