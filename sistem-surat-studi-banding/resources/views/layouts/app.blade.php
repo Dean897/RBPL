@@ -78,9 +78,13 @@
                     </li>
                     <hr>
                     <li class="nav-item">
-                        <a class="nav-link text-danger" href="#">
-                            <i class="fas fa-sign-out-alt me-2"></i> Keluar
-                        </a>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit"
+                                class="nav-link text-danger border-0 bg-transparent w-100 text-start">
+                                <i class="fas fa-sign-out-alt me-2"></i> Keluar
+                            </button>
+                        </form>
                     </li>
                 </ul>
             </nav>
@@ -90,7 +94,7 @@
                     class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h3>@yield('title')</h3>
                     <div class="user-info">
-                        <span>Halo, Sekretariat</span>
+                        <span>Halo, {{ Auth::user()->name }}</span>
                     </div>
                 </div>
 

@@ -7,16 +7,27 @@ use App\Http\Controllers\Sekretariat\DashboardController;
 use App\Http\Controllers\Sekretariat\SuratMasukController;
 use App\Http\Controllers\Sekretariat\DisposisiController;
 
+use App\Http\Controllers\Eksternal\DashboardController as EksternalDashboardController;
+use App\Http\Controllers\Eksternal\PengajuanSuratController;
+use Illuminate\Support\Facades\Auth;
+
 Route::get('/', function () {
     return view('welcome');
 });
 
 Route::get('/dashboard', function () {
-    return redirect()->route('sekretariat.dashboard');
+    $role = Auth::user()->role ?? 'eksternal';
+
+    return match ($role) {
+        'sekretariat' => redirect()->route('sekretariat.dashboard'),
+        'eksternal', 'tamu' => redirect()->route('eksternal.dashboard'),
+        default => redirect()->route('eksternal.dashboard'),
+    };
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 
-Route::middleware(['auth'])->group(function () {
+// ── Route Sekretariat ─────────────────────────────────────────
+Route::middleware(['auth', 'role:sekretariat'])->group(function () {
     Route::prefix('sekretariat')->name('sekretariat.')->group(function () {
 
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -32,8 +43,20 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/disposisi/{suratMasuk}/create', [DisposisiController::class, 'create'])->name('disposisi.create');
         Route::post('/disposisi/{suratMasuk}', [DisposisiController::class, 'store'])->name('disposisi.store');
     });
+});
 
+// ── Route Eksternal ───────────────────────────────────────────
+Route::middleware(['auth', 'role:eksternal,tamu'])->group(function () {
+    Route::prefix('eksternal')->name('eksternal.')->group(function () {
+        Route::get('/dashboard', [EksternalDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/pengajuan/create', [PengajuanSuratController::class, 'create'])->name('pengajuan.create');
+        Route::post('/pengajuan', [PengajuanSuratController::class, 'store'])->name('pengajuan.store');
+        Route::get('/pengajuan/{suratMasuk}', [PengajuanSuratController::class, 'show'])->name('pengajuan.show');
+    });
+});
 
+// ── Route Profile (semua role) ────────────────────────────────
+Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
