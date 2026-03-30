@@ -62,7 +62,8 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link {{ request()->routeIs('sekretariat.surat-keluar.*') ? 'active' : '' }}"
+                            href="{{ route('sekretariat.surat-keluar.index') }}">
                             <i class="fas fa-paper-plane me-2"></i> Surat Keluar
                         </a>
                     </li>

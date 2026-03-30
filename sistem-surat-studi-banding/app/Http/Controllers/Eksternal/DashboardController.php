@@ -19,12 +19,21 @@ class DashboardController extends Controller
         $diproses = $suratList->whereIn('status', ['Menunggu Disposisi', 'Disposisi Terkirim'])->count();
         $selesai = $suratList->where('status', 'Selesai')->count();
 
+        // Surat balasan yang siap didownload
+        $suratBalasan = [];
+        foreach ($suratList as $surat) {
+            if ($surat->disposisi && $surat->disposisi->status_surat_keluar === 'Terkirim' && $surat->disposisi->file_pdf_balasan) {
+                $suratBalasan[] = $surat;
+            }
+        }
+
         return view('Eksternal.dashboard', compact(
             'suratList',
             'totalSurat',
             'menungguVerifikasi',
             'diproses',
-            'selesai'
+            'selesai',
+            'suratBalasan'
         ));
     }
 }

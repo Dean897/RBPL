@@ -6,9 +6,12 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Sekretariat\DashboardController;
 use App\Http\Controllers\Sekretariat\SuratMasukController;
 use App\Http\Controllers\Sekretariat\DisposisiController;
+use App\Http\Controllers\Sekretariat\SuratKeluarController;
+use App\Http\Controllers\Pimpinan\DisposisiController as PimpinanDisposisiController;
 
 use App\Http\Controllers\Eksternal\DashboardController as EksternalDashboardController;
 use App\Http\Controllers\Eksternal\PengajuanSuratController;
+use App\Http\Controllers\Eksternal\SuratBalesanController;
 use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
@@ -20,6 +23,7 @@ Route::get('/dashboard', function () {
 
     return match ($role) {
         'sekretariat' => redirect()->route('sekretariat.dashboard'),
+        'pimpinan' => redirect()->route('pimpinan.disposisi.index'),
         'eksternal', 'tamu' => redirect()->route('eksternal.dashboard'),
         default => redirect()->route('eksternal.dashboard'),
     };
@@ -42,6 +46,23 @@ Route::middleware(['auth', 'role:sekretariat'])->group(function () {
         Route::get('/disposisi/tracking-data', [DisposisiController::class, 'trackingData'])->name('disposisi.tracking-data');
         Route::get('/disposisi/{suratMasuk}/create', [DisposisiController::class, 'create'])->name('disposisi.create');
         Route::post('/disposisi/{suratMasuk}', [DisposisiController::class, 'store'])->name('disposisi.store');
+
+        Route::get('/surat-keluar', [SuratKeluarController::class, 'index'])->name('surat-keluar.index');
+        Route::get('/surat-keluar/{disposisi}/create', [SuratKeluarController::class, 'create'])->name('surat-keluar.create');
+        Route::post('/surat-keluar/{disposisi}', [SuratKeluarController::class, 'store'])->name('surat-keluar.store');
+        Route::get('/surat-keluar/{disposisi}/edit', [SuratKeluarController::class, 'edit'])->name('surat-keluar.edit');
+        Route::patch('/surat-keluar/{disposisi}', [SuratKeluarController::class, 'update'])->name('surat-keluar.update');
+        Route::post('/surat-keluar/{disposisi}/send', [SuratKeluarController::class, 'generateAndSend'])->name('surat-keluar.send');
+        Route::get('/surat-keluar/{disposisi}/download', [SuratKeluarController::class, 'downloadPdf'])->name('surat-keluar.download');
+    });
+});
+
+// ── Route Pimpinan ───────────────────────────────────────────
+Route::middleware(['auth', 'role:pimpinan'])->group(function () {
+    Route::prefix('pimpinan')->name('pimpinan.')->group(function () {
+        Route::get('/disposisi', [PimpinanDisposisiController::class, 'index'])->name('disposisi.index');
+        Route::patch('/disposisi/{disposisi}/keputusan', [PimpinanDisposisiController::class, 'updateKeputusan'])
+            ->name('disposisi.update-keputusan');
     });
 });
 
@@ -52,6 +73,7 @@ Route::middleware(['auth', 'role:eksternal,tamu'])->group(function () {
         Route::get('/pengajuan/create', [PengajuanSuratController::class, 'create'])->name('pengajuan.create');
         Route::post('/pengajuan', [PengajuanSuratController::class, 'store'])->name('pengajuan.store');
         Route::get('/pengajuan/{suratMasuk}', [PengajuanSuratController::class, 'show'])->name('pengajuan.show');
+        Route::get('/surat-balasan/{disposisi}/download', [SuratBalesanController::class, 'download'])->name('surat-balasan.download');
     });
 });
 

@@ -69,7 +69,37 @@
         </div>
     </div>
 
-    {{-- Tombol Aksi --}}
+    {{-- Notifikasi Surat Balasan --}}
+    @if (!empty($suratBalasan))
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+            <i class="fas fa-bell me-2"></i>
+            <strong>Ada {{ count($suratBalasan) }} surat balasan menunggu Anda!</strong>
+            <p class="mt-2 mb-0">Surat balasan untuk permohonan Anda sudah siap. Silakan download di bawah ini.</p>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="row mb-4">
+            @foreach ($suratBalasan as $surat)
+                <div class="col-md-6 mb-3">
+                    <div class="card card-form border-success border shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title mb-0"><i class="fas fa-check-circle text-success me-2"></i>Surat
+                                    Balasan Siap</h6>
+                                <span class="badge bg-success">Baru</span>
+                            </div>
+                            <p class="text-muted small mb-2">{{ $surat->perihal }}</p>
+                            <p class="text-muted small mb-3">{{ $surat->instansi }} | No: {{ $surat->no_surat }}</p>
+                            <a href="{{ route('eksternal.surat-balasan.download', $surat->disposisi->id) }}"
+                                class="btn btn-sm btn-success w-100">
+                                <i class="fas fa-download me-1"></i> Download Surat Balasan (PDF)
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @endif
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="fw-bold mb-0">Riwayat Pengajuan Surat</h5>
         <a href="{{ route('eksternal.pengajuan.create') }}" class="btn btn-primary">
