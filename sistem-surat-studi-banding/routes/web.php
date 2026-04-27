@@ -7,6 +7,7 @@ use App\Http\Controllers\Sekretariat\DashboardController;
 use App\Http\Controllers\Sekretariat\SuratMasukController;
 use App\Http\Controllers\Sekretariat\DisposisiController;
 use App\Http\Controllers\Sekretariat\SuratKeluarController;
+use App\Http\Controllers\Sekretariat\TamuQrController;
 use App\Http\Controllers\Pimpinan\DisposisiController as PimpinanDisposisiController;
 
 use App\Http\Controllers\Eksternal\DashboardController as EksternalDashboardController;
@@ -15,6 +16,11 @@ use App\Http\Controllers\Eksternal\SuratBalesanController;
 use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
+    // Jika sudah login, redirect ke dashboard
+    if (Auth::check()) {
+        return redirect('/dashboard');
+    }
+    // Jika belum login, tampilkan welcome
     return view('welcome');
 });
 
@@ -54,6 +60,12 @@ Route::middleware(['auth', 'role:sekretariat'])->group(function () {
         Route::patch('/surat-keluar/{disposisi}', [SuratKeluarController::class, 'update'])->name('surat-keluar.update');
         Route::post('/surat-keluar/{disposisi}/send', [SuratKeluarController::class, 'generateAndSend'])->name('surat-keluar.send');
         Route::get('/surat-keluar/{disposisi}/download', [SuratKeluarController::class, 'downloadPdf'])->name('surat-keluar.download');
+
+        // Buku Tamu QR Code Routes
+        Route::prefix('buku-tamu')->name('buku-tamu.')->group(function () {
+            Route::get('/', [TamuQrController::class, 'index'])->name('index');
+            Route::get('/create', [TamuQrController::class, 'create'])->name('create');
+        });
     });
 });
 
