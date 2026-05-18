@@ -3,10 +3,20 @@
 @section('title', 'Pelacakan Disposisi')
 
 @section('content')
-    {{-- Ringkasan Statistik --}}
-    <div class="row mb-4">
+    <div class="page-intro mb-4">
+        <div class="d-flex justify-content-between align-items-start gap-3">
+            <div>
+                <div class="small text-uppercase fw-semibold opacity-75 mb-1">Sekretariat • Tracking Disposisi</div>
+                <h4 class="fw-bold mb-1 text-white">Pelacakan Disposisi</h4>
+                <p class="mb-0 text-white-50">Pantau status disposisi yang sedang berjalan secara real-time.</p>
+            </div>
+            <span class="badge text-bg-light text-primary rounded-pill px-3 py-2">Live</span>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm h-100">
                 <div class="card-body d-flex align-items-center">
                     <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
                         <i class="fas fa-paper-plane text-primary fa-lg"></i>
@@ -19,7 +29,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm h-100">
                 <div class="card-body d-flex align-items-center">
                     <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
                         <i class="fas fa-clock text-warning fa-lg"></i>
@@ -32,7 +42,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm h-100">
                 <div class="card-body d-flex align-items-center">
                     <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
                         <i class="fas fa-check-circle text-success fa-lg"></i>
@@ -45,7 +55,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm h-100">
                 <div class="card-body d-flex align-items-center">
                     <div class="rounded-circle bg-danger bg-opacity-10 p-3 me-3">
                         <i class="fas fa-times-circle text-danger fa-lg"></i>
@@ -59,7 +69,6 @@
         </div>
     </div>
 
-    {{-- Filter Bar --}}
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body py-2">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
@@ -81,7 +90,11 @@
         </div>
     </div>
 
-    {{-- Grid Kartu Disposisi --}}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-semibold mb-0">Daftar Disposisi</h5>
+        <small class="text-muted">Perubahan kartu akan diperbarui otomatis.</small>
+    </div>
+
     <div class="row" id="disposisi-cards">
         @forelse($disposisis as $disposisi)
             @include('Sekretariat.disposisi._tracking-card', ['disposisi' => $disposisi])

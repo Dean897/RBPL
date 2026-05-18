@@ -3,10 +3,15 @@
 @section('title', 'Manajemen Surat Keluar')
 
 @section('content')
-    <div class="mb-4">
-        <h3 class="fw-bold mb-3">Manajemen Surat Keluar</h3>
-        <p class="text-muted">Kelola pembuatan dan pengiriman surat balasan untuk permohonan studi banding yang disetujui.
-        </p>
+    <div class="page-intro mb-4">
+        <div class="d-flex justify-content-between align-items-start gap-3">
+            <div>
+                <div class="small text-uppercase fw-semibold opacity-75 mb-1">Sekretariat • Surat Keluar</div>
+                <h4 class="fw-bold mb-1 text-white">Manajemen Surat Keluar</h4>
+                <p class="mb-0 text-white-50">Kelola pembuatan dan pengiriman surat balasan untuk permohonan studi banding.
+                </p>
+            </div>
+        </div>
     </div>
 
     @if (session('success'))
@@ -24,9 +29,9 @@
     @endif
 
     <!-- Stats Cards -->
-    <div class="row mb-4">
+    <div class="row g-3 mb-4">
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm h-100">
                 <div class="card-body d-flex align-items-center">
                     <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
                         <i class="fas fa-hourglass-half text-warning fa-lg"></i>
@@ -39,7 +44,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm h-100">
                 <div class="card-body d-flex align-items-center">
                     <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
                         <i class="fas fa-file-alt text-info fa-lg"></i>
@@ -52,7 +57,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm h-100">
                 <div class="card-body d-flex align-items-center">
                     <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
                         <i class="fas fa-paper-plane text-success fa-lg"></i>
@@ -69,7 +74,7 @@
     <!-- Daftar Surat -->
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white py-3 border-bottom">
-            <h5 class="mb-0">Surat Menunggu dan Draft Balasan</h5>
+            <h5 class="mb-0 fw-semibold">Surat Menunggu dan Draft Balasan</h5>
         </div>
         <div class="card-body">
             @forelse ($suratKeluar as $item)

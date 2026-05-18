@@ -96,6 +96,11 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // Dedicated password change page (shown on click from profile for roles like Pimpinan)
+    Route::get('/profile/password', function () {
+        return view('profile.password');
+    })->name('profile.password');
+
     // Arsip Digital
     Route::resource('archives', ArchiveController::class);
     Route::get('archives/{archive}/preview', [ArchiveController::class, 'preview'])->name('archives.preview');

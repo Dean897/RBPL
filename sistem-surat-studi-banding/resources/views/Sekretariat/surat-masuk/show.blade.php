@@ -3,7 +3,6 @@
 @section('title', 'Detail Surat Masuk')
 
 @section('content')
-    {{-- Flash message --}}
     @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
@@ -11,17 +10,24 @@
         </div>
     @endif
 
-    <div class="row">
-        {{-- Kolom Kiri: Informasi Surat --}}
-        <div class="col-md-5">
-            <div class="card shadow-sm mb-3">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-                    <h5 class="mb-0 text-secondary"><i class="fas fa-envelope-open me-2"></i>Informasi Surat</h5>
-                    <a href="{{ route('sekretariat.surat-masuk.index') }}" class="btn btn-sm btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-1"></i>Kembali
-                    </a>
-                </div>
+    <div class="page-intro mb-4">
+        <div class="d-flex justify-content-between align-items-start gap-3">
+            <div>
+                <div class="small text-uppercase fw-semibold opacity-75 mb-1">Sekretariat • Detail Surat Masuk</div>
+                <h4 class="fw-bold mb-1 text-white">{{ $suratMasuk->no_surat }}</h4>
+                <p class="mb-0 text-white-50">{{ $suratMasuk->instansi }} • {{ $suratMasuk->perihal }}</p>
+            </div>
+            <a href="{{ route('sekretariat.surat-masuk.index') }}" class="btn btn-light text-primary fw-semibold">
+                <i class="fas fa-arrow-left me-2"></i>Kembali
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3 align-items-start">
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm mb-3">
                 <div class="card-body">
+                    <h5 class="fw-semibold mb-3"><i class="fas fa-envelope-open me-2"></i>Informasi Surat</h5>
                     <table class="table table-borderless mb-0">
                         <tbody>
                             <tr>
@@ -42,12 +48,7 @@
                             </tr>
                             <tr>
                                 <th class="text-muted">Tanggal Diterima</th>
-                                <td>
-                                    @if ($suratMasuk->tanggal_terima)
-                                        {{ \Carbon\Carbon::parse($suratMasuk->tanggal_terima)->format('d M Y') }}
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
+                                <td>{{ $suratMasuk->tanggal_terima ? \Carbon\Carbon::parse($suratMasuk->tanggal_terima)->format('d M Y') : '-' }}
                                 </td>
                             </tr>
                             <tr>
@@ -63,9 +64,7 @@
                                             default => 'bg-secondary',
                                         };
                                     @endphp
-                                    <span class="badge {{ $badgeClass }} rounded-pill">
-                                        {{ $suratMasuk->status }}
-                                    </span>
+                                    <span class="badge {{ $badgeClass }} rounded-pill">{{ $suratMasuk->status }}</span>
                                 </td>
                             </tr>
                             <tr>
@@ -77,13 +76,10 @@
                 </div>
             </div>
 
-            {{-- Status Disposisi --}}
             @if ($suratMasuk->disposisi)
-                <div class="card shadow-sm mb-3">
-                    <div class="card-header bg-white py-3">
-                        <h5 class="mb-0 text-secondary"><i class="fas fa-file-alt me-2"></i>Lembar Disposisi</h5>
-                    </div>
+                <div class="card border-0 shadow-sm mb-3">
                     <div class="card-body">
+                        <h5 class="fw-semibold mb-3"><i class="fas fa-file-alt me-2"></i>Lembar Disposisi</h5>
                         <table class="table table-borderless mb-0">
                             <tbody>
                                 <tr>
@@ -106,9 +102,8 @@
                                                 default => 'bg-secondary',
                                             };
                                         @endphp
-                                        <span class="badge {{ $disposisiBadge }} rounded-pill">
-                                            {{ $suratMasuk->disposisi->status_keputusan }}
-                                        </span>
+                                        <span
+                                            class="badge {{ $disposisiBadge }} rounded-pill">{{ $suratMasuk->disposisi->status_keputusan }}</span>
                                     </td>
                                 </tr>
                                 @if ($suratMasuk->disposisi->catatan_pimpinan)
@@ -123,39 +118,36 @@
                 </div>
             @endif
 
-            {{-- Tombol Aksi --}}
-            <div class="d-grid gap-2">
-                @if (!$suratMasuk->disposisi)
-                    @if ($suratMasuk->status === 'Menunggu Verifikasi')
-                        {{-- Verifikasi dulu sebelum bisa buat disposisi --}}
-                        <form action="{{ route('sekretariat.surat-masuk.verify', $suratMasuk->id) }}" method="POST">
-                            @csrf
-                            @method('PATCH')
-                            <button type="submit" class="btn btn-success w-100">
-                                <i class="fas fa-check-circle me-2"></i>Verifikasi & Lanjut Disposisi
-                            </button>
-                        </form>
-                    @elseif ($suratMasuk->status === 'Menunggu Disposisi')
-                        <a href="{{ route('sekretariat.disposisi.create', $suratMasuk->id) }}" class="btn btn-primary">
-                            <i class="fas fa-file-alt me-2"></i>Buat Lembar Disposisi
-                        </a>
+            <div class="card border-0 shadow-sm">
+                <div class="card-body d-grid gap-2">
+                    @if (!$suratMasuk->disposisi)
+                        @if ($suratMasuk->status === 'Menunggu Verifikasi')
+                            <form action="{{ route('sekretariat.surat-masuk.verify', $suratMasuk->id) }}" method="POST">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit" class="btn btn-success w-100"><i
+                                        class="fas fa-check-circle me-2"></i>Verifikasi & Lanjut Disposisi</button>
+                            </form>
+                        @elseif ($suratMasuk->status === 'Menunggu Disposisi')
+                            <a href="{{ route('sekretariat.disposisi.create', $suratMasuk->id) }}" class="btn btn-primary">
+                                <i class="fas fa-file-alt me-2"></i>Buat Lembar Disposisi
+                            </a>
+                        @endif
                     @endif
-                @endif
-            </div>
-        </div>
-
-        {{-- Kolom Kanan: Preview PDF --}}
-        <div class="col-md-7">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 text-secondary"><i class="fas fa-file-pdf me-2"></i>Dokumen Surat</h5>
-                    <a href="{{ asset('storage/' . $suratMasuk->file_pdf) }}" target="_blank"
-                        class="btn btn-sm btn-outline-dark">
+                    <a href="{{ asset('storage/' . $suratMasuk->file_pdf) }}" target="_blank" class="btn btn-outline-dark">
                         <i class="fas fa-external-link-alt me-1"></i>Buka di Tab Baru
                     </a>
                 </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-semibold"><i class="fas fa-file-pdf me-2"></i>Dokumen Surat</h5>
+                </div>
                 <div class="card-body p-0">
-                    <iframe src="{{ asset('storage/' . $suratMasuk->file_pdf) }}" width="100%" height="700px"
+                    <iframe src="{{ asset('storage/' . $suratMasuk->file_pdf) }}" width="100%" height="720px"
                         style="border: none;">
                         Browser Anda tidak mendukung preview PDF.
                         <a href="{{ asset('storage/' . $suratMasuk->file_pdf) }}">Download PDF</a>

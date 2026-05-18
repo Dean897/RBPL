@@ -102,7 +102,8 @@
     <section class="headline-card mb-3">
         <div class="d-flex justify-content-between align-items-start gap-2">
             <div>
-                <h5 class="fw-bold mb-1">Halo, Bapak Pimpinan</h5>
+                <div class="small text-uppercase fw-semibold text-white-50 mb-1">Pimpinan</div>
+                <h5 class="fw-bold mb-1">Review Disposisi</h5>
                 <p class="mb-0 text-white-50">Ada {{ $inboxCount }} disposisi menunggu direview.</p>
             </div>
             <span class="badge text-bg-warning rounded-pill px-3 py-2">
@@ -111,7 +112,7 @@
         </div>
     </section>
 
-    <section class="row g-2 mb-3">
+    <section class="row g-3 mb-3">
         <div class="col-6">
             <div class="quick-stat">
                 <div class="label">Inbox</div>
@@ -127,7 +128,10 @@
     </section>
 
     <section class="search-card p-3 mb-3" id="pencarian">
-        <label for="search-disposisi" class="form-label fw-semibold mb-2">Cari Instansi / Perihal</label>
+        <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+            <label for="search-disposisi" class="form-label fw-semibold mb-0">Cari Instansi / Perihal</label>
+            <span class="badge text-bg-light text-primary border">Live Filter</span>
+        </div>
         <input id="search-disposisi" type="text" class="form-control"
             placeholder="Contoh: Universitas Gadjah Mada atau studi banding...">
         <small class="text-muted">Pencarian cepat untuk mempercepat review.</small>

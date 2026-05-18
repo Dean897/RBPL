@@ -7,23 +7,49 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.update-profile-information-form')
-                </div>
-            </div>
+            @if (Auth::user() && Auth::user()->role === 'pimpinan')
+                <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
+                    <div class="max-w-xl">
+                        <section>
+                            <header>
+                                <h2 class="text-lg font-medium text-gray-900">{{ __('Profile Information') }}</h2>
+                                <p class="mt-1 text-sm text-gray-600">Informasi profil singkat untuk Pimpinan. Untuk
+                                    perubahan data profil, silakan hubungi administrator.</p>
+                            </header>
 
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.update-password-form')
+                            <div class="mt-4">
+                                <p class="mb-1"><strong>Nama:</strong> {{ Auth::user()->name }}</p>
+                                <p class="mb-1"><strong>Email:</strong> {{ Auth::user()->email }}</p>
+                                <p class="text-sm text-muted">Peran: {{ ucfirst(Auth::user()->role) }}</p>
+                            </div>
+                        </section>
+                    </div>
                 </div>
-            </div>
 
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.delete-user-form')
+                <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
+                    <div class="max-w-xl">
+                        <a href="{{ route('profile.password') }}" class="btn btn-primary">Ubah Kata Sandi</a>
+                    </div>
                 </div>
-            </div>
+            @else
+                <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
+                    <div class="max-w-xl">
+                        @include('profile.partials.update-profile-information-form')
+                    </div>
+                </div>
+
+                <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
+                    <div class="max-w-xl">
+                        @include('profile.partials.update-password-form')
+                    </div>
+                </div>
+
+                <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
+                    <div class="max-w-xl">
+                        @include('profile.partials.delete-user-form')
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 </x-app-layout>
