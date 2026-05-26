@@ -34,73 +34,115 @@
                 </div>
             </div>
 
-            {{-- Preview PDF kecil --}}
+            {{-- Preview PDF kecil (PDF.js) --}}
             <div class="card shadow-sm">
                 <div class="card-header bg-white py-3">
                     <h5 class="mb-0 text-secondary"><i class="fas fa-file-pdf me-2"></i>Dokumen</h5>
                 </div>
                 <div class="card-body p-0">
-                    <iframe src="{{ route('sekretariat.surat-masuk.preview', $suratMasuk->id) }}" width="100%"
-                        height="350px" style="border: none;"></iframe>
+                    <div id="pdf-viewer-small"
+                        style="width:100%;height:350px;overflow:auto;background:#fafbff;display:flex;align-items:center;justify-content:center;">
+                        <canvas id="pdf-canvas-small" style="max-width:100%;"></canvas>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        {{-- Kolom Kanan: Form Disposisi --}}
-        <div class="col-md-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-                    <h5 class="mb-0 text-secondary"><i class="fas fa-file-alt me-2"></i>Form Lembar Disposisi</h5>
-                    <a href="{{ route('sekretariat.surat-masuk.show', $suratMasuk->id) }}"
-                        class="btn btn-sm btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-1"></i>Kembali
-                    </a>
-                </div>
-                <div class="card-body">
+        @section('scripts')
+            @parent
+            <script src="https://unpkg.com/pdfjs-dist@3.7.107/build/pdf.min.js"></script>
+            <script>
+                (function() {
+                    const url = '{{ route('sekretariat.surat-masuk.preview-raw', $suratMasuk->id) }}';
+                    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.7.107/build/pdf.worker.min.js';
 
-                    <x-validation-errors class="mb-3" />
+                    let pdfDoc = null;
+                    const canvas = document.getElementById('pdf-canvas-small');
+                    const ctx = canvas.getContext('2d');
 
-                    <form action="{{ route('sekretariat.disposisi.store', $suratMasuk->id) }}" method="POST">
-                        @csrf
+                    pdfjsLib.getDocument(url).promise.then(function(pdf) {
+                        pdfDoc = pdf;
+                        // render first page scaled to container
+                        pdf.getPage(1).then(function(page) {
+                            const viewport = page.getViewport({
+                                scale: 1
+                            });
+                            const scale = (document.getElementById('pdf-viewer-small').clientWidth - 20) /
+                                viewport.width;
+                            const scaled = page.getViewport({
+                                scale: scale
+                            });
+                            canvas.width = scaled.width;
+                            canvas.height = scaled.height;
+                            page.render({
+                                canvasContext: ctx,
+                                viewport: scaled
+                            });
+                        });
+                    }).catch(function(err) {
+                        document.getElementById('pdf-viewer-small').innerHTML =
+                            '<div class="p-3 text-center text-muted">Tidak dapat memuat PDF.</div>';
+                    });
+                })();
+            </script>
+        @endsection
+    </div>
 
-                        {{-- Tanggal Disposisi --}}
-                        <div class="mb-3">
-                            <label for="tgl_disposisi" class="form-label">
-                                Tanggal Disposisi <span class="text-danger">*</span>
-                            </label>
-                            <input type="date" class="form-control @error('tgl_disposisi') is-invalid @enderror"
-                                id="tgl_disposisi" name="tgl_disposisi" value="{{ old('tgl_disposisi', date('Y-m-d')) }}"
-                                required>
-                            @error('tgl_disposisi')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+    {{-- Kolom Kanan: Form Disposisi --}}
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="mb-0 text-secondary"><i class="fas fa-file-alt me-2"></i>Form Lembar Disposisi</h5>
+                <a href="{{ route('sekretariat.surat-masuk.show', $suratMasuk->id) }}"
+                    class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Kembali
+                </a>
+            </div>
+            <div class="card-body">
 
-                        {{-- Catatan Sekretariat --}}
-                        <div class="mb-3">
-                            <label for="catatan_sekretariat" class="form-label">
-                                Catatan / Instruksi untuk Pimpinan
-                            </label>
-                            <textarea class="form-control @error('catatan_sekretariat') is-invalid @enderror" id="catatan_sekretariat"
-                                name="catatan_sekretariat" rows="5" placeholder="Tuliskan catatan atau ringkasan isi surat untuk Pimpinan...">{{ old('catatan_sekretariat') }}</textarea>
-                            @error('catatan_sekretariat')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                <x-validation-errors class="mb-3" />
 
-                        <hr>
+                <form action="{{ route('sekretariat.disposisi.store', $suratMasuk->id) }}" method="POST">
+                    @csrf
 
-                        <div class="d-flex justify-content-end gap-2">
-                            <a href="{{ route('sekretariat.surat-masuk.show', $suratMasuk->id) }}"
-                                class="btn btn-secondary">Batal</a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-paper-plane me-2"></i>Kirim Disposisi ke Pimpinan
-                            </button>
-                        </div>
-                    </form>
+                    {{-- Tanggal Disposisi --}}
+                    <div class="mb-3">
+                        <label for="tgl_disposisi" class="form-label">
+                            Tanggal Disposisi <span class="text-danger">*</span>
+                        </label>
+                        <input type="date" class="form-control @error('tgl_disposisi') is-invalid @enderror"
+                            id="tgl_disposisi" name="tgl_disposisi" value="{{ old('tgl_disposisi', date('Y-m-d')) }}"
+                            required>
+                        @error('tgl_disposisi')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
 
-                </div>
+                    {{-- Catatan Sekretariat --}}
+                    <div class="mb-3">
+                        <label for="catatan_sekretariat" class="form-label">
+                            Catatan / Instruksi untuk Pimpinan
+                        </label>
+                        <textarea class="form-control @error('catatan_sekretariat') is-invalid @enderror" id="catatan_sekretariat"
+                            name="catatan_sekretariat" rows="5" placeholder="Tuliskan catatan atau ringkasan isi surat untuk Pimpinan...">{{ old('catatan_sekretariat') }}</textarea>
+                        @error('catatan_sekretariat')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ route('sekretariat.surat-masuk.show', $suratMasuk->id) }}"
+                            class="btn btn-secondary">Batal</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-2"></i>Kirim Disposisi ke Pimpinan
+                        </button>
+                    </div>
+                </form>
+
             </div>
         </div>
     </div>
+</div>
 @endsection
