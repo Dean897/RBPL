@@ -129,8 +129,9 @@
                             </a>
                         @endif
                     @endif
-                    <a href="{{ asset('storage/' . $suratMasuk->file_pdf) }}" target="_blank" class="btn btn-outline-dark">
-                        <i class="fas fa-external-link-alt me-1"></i>Buka di Tab Baru
+                    <a href="{{ route('sekretariat.surat-masuk.download', $suratMasuk->id) }}"
+                        class="btn btn-outline-primary">
+                        <i class="fas fa-download me-1"></i>Unduh PDF
                     </a>
                 </div>
             </div>
@@ -142,13 +143,86 @@
                     <h5 class="mb-0 fw-semibold"><i class="fas fa-file-pdf me-2"></i>Dokumen Surat</h5>
                 </div>
                 <div class="card-body p-0">
-                    <iframe src="{{ asset('storage/' . $suratMasuk->file_pdf) }}" width="100%" height="720px"
-                        style="border: none;">
-                        Browser Anda tidak mendukung preview PDF.
-                        <a href="{{ asset('storage/' . $suratMasuk->file_pdf) }}">Download PDF</a>
-                    </iframe>
-                </div>
+                    <div id="pdf-viewer"
+                        style="width:100%;height:720px;overflow:auto;background:#f6f7fb;display:flex;align-items:center;justify-content:center;">
+                        <canvas id="pdf-canvas" style="max-width:100%;box-shadow:0 8px 30px rgba(15,23,42,0.06);"></canvas>
+                    </div>
+                    <div class="p-3 d-flex justify-content-between">
+                        <div>
+                            <a id="downloadLink" href="{{ route('sekretariat.surat-masuk.download', $suratMasuk->id) }}"
+                                class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-download me-1"></i>Unduh PDF
+                            </a>
+                        </div>
+                        <div>
+                            <button id="prevPage" class="btn btn-sm btn-light">&larr; Sebelumnya</button>
+                            <span class="mx-2">Halaman <span id="pageNum">1</span> / <span
+                                    id="pageCount">--</span></span>
+                            <button id="nextPage" class="btn btn-sm btn-light">Berikutnya &rarr;</button>
+                        </div>
+                    </div>
+
+                @section('scripts')
+                    @parent
+                    <script src="https://unpkg.com/pdfjs-dist@3.7.107/build/pdf.min.js"></script>
+                    <script>
+                        (function() {
+                            const url = '{{ route('sekretariat.surat-masuk.preview-raw', $suratMasuk->id) }}';
+                            const pdfjsLib = window['pdfjs-dist/build/pdf'];
+                            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.7.107/build/pdf.worker.min.js';
+
+                            let pdfDoc = null;
+                            let pageNum = 1;
+                            const canvas = document.getElementById('pdf-canvas');
+                            const ctx = canvas.getContext('2d');
+
+                            function renderPage(num) {
+                                pdfDoc.getPage(num).then(function(page) {
+                                    const viewport = page.getViewport({
+                                        scale: 1.25
+                                    });
+                                    const scale = (document.getElementById('pdf-viewer').clientWidth - 40) / viewport.width;
+                                    const scaledViewport = page.getViewport({
+                                        scale: scale
+                                    });
+                                    canvas.height = scaledViewport.height;
+                                    canvas.width = scaledViewport.width;
+
+                                    const renderContext = {
+                                        canvasContext: ctx,
+                                        viewport: scaledViewport
+                                    };
+                                    page.render(renderContext).promise.then(function() {
+                                        document.getElementById('pageNum').textContent = num;
+                                    });
+                                });
+                            }
+
+                            pdfjsLib.getDocument(url).promise.then(function(pdf) {
+                                pdfDoc = pdf;
+                                document.getElementById('pageCount').textContent = pdf.numPages;
+                                renderPage(pageNum);
+                            }).catch(function(err) {
+                                document.getElementById('pdf-viewer').innerHTML =
+                                    '<div class="p-4 text-center text-muted">Gagal memuat PDF: ' + (err.message || err) +
+                                    '</div>';
+                            });
+
+                            document.getElementById('prevPage').addEventListener('click', function() {
+                                if (pageNum <= 1) return;
+                                pageNum--;
+                                renderPage(pageNum);
+                            });
+                            document.getElementById('nextPage').addEventListener('click', function() {
+                                if (pageNum >= (pdfDoc?.numPages || 1)) return;
+                                pageNum++;
+                                renderPage(pageNum);
+                            });
+                        })();
+                    </script>
+                @endsection
             </div>
         </div>
     </div>
+</div>
 @endsection

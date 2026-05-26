@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Sekretariat\StoreSuratMasukRequest;
 use App\Models\SuratMasuk;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class SuratMasukController extends Controller
 {
@@ -58,6 +59,53 @@ class SuratMasukController extends Controller
         $suratMasuk->load(['pengirim', 'disposisi']);
 
         return view('Sekretariat.surat-masuk.show', compact('suratMasuk'));
+    }
+
+    /**
+     * Stream PDF surat masuk tanpa bergantung pada public/storage symlink.
+     */
+    public function preview(SuratMasuk $suratMasuk)
+    {
+        $path = Storage::disk('public')->path($suratMasuk->file_pdf);
+        if (!file_exists($path)) {
+            abort(404, 'File tidak ditemukan.');
+        }
+
+        return response()->file($path, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . basename($path) . '"',
+        ]);
+    }
+
+    /**
+     * Download PDF surat masuk.
+     */
+    public function download(SuratMasuk $suratMasuk)
+    {
+        $downloadName = 'surat-masuk-' . $suratMasuk->no_surat . '.pdf';
+
+        return Storage::disk('public')->download($suratMasuk->file_pdf, $downloadName);
+    }
+
+    /**
+     * Debug: return raw PDF contents with explicit headers (use to test browser behavior).
+     */
+    public function previewRaw(SuratMasuk $suratMasuk)
+    {
+        $disk = Storage::disk('public');
+        if (! $disk->exists($suratMasuk->file_pdf)) {
+            abort(404, 'File tidak ditemukan.');
+        }
+
+        $content = $disk->get($suratMasuk->file_pdf);
+        $length = strlen($content);
+
+        return response($content, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Length' => $length,
+            'Content-Disposition' => 'inline; filename="' . basename($suratMasuk->file_pdf) . '"',
+            'Cache-Control' => 'private, max-age=0, must-revalidate',
+        ]);
     }
 
     /**

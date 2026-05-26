@@ -50,6 +50,10 @@ Route::middleware(['auth', 'role:sekretariat'])->group(function () {
         Route::get('/surat-masuk/create', [SuratMasukController::class, 'create'])->name('surat-masuk.create');
         Route::post('/surat-masuk', [SuratMasukController::class, 'store'])->name('surat-masuk.store');
         Route::get('/surat-masuk/{suratMasuk}', [SuratMasukController::class, 'show'])->name('surat-masuk.show');
+        Route::get('/surat-masuk/{suratMasuk}/preview', [SuratMasukController::class, 'preview'])->name('surat-masuk.preview');
+        Route::get('/surat-masuk/{suratMasuk}/download', [SuratMasukController::class, 'download'])->name('surat-masuk.download');
+        // Debug/raw preview route: returns PDF as raw bytes with explicit headers
+        Route::get('/surat-masuk/{suratMasuk}/preview-raw', [SuratMasukController::class, 'previewRaw'])->name('surat-masuk.preview-raw');
         Route::patch('/surat-masuk/{suratMasuk}/verify', [SuratMasukController::class, 'verify'])->name('surat-masuk.verify');
 
         Route::get('/disposisi/tracking', [DisposisiController::class, 'tracking'])->name('disposisi.tracking');

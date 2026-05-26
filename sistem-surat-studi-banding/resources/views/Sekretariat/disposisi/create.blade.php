@@ -40,8 +40,8 @@
                     <h5 class="mb-0 text-secondary"><i class="fas fa-file-pdf me-2"></i>Dokumen</h5>
                 </div>
                 <div class="card-body p-0">
-                    <iframe src="{{ asset('storage/' . $suratMasuk->file_pdf) }}" width="100%" height="350px"
-                        style="border: none;"></iframe>
+                    <iframe src="{{ route('sekretariat.surat-masuk.preview', $suratMasuk->id) }}" width="100%"
+                        height="350px" style="border: none;"></iframe>
                 </div>
             </div>
         </div>
