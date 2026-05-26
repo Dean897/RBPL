@@ -16,8 +16,8 @@ class SuratKeluarController extends Controller
     {
         $baseQuery = Disposisi::query()->where('status_keputusan', 'Diterima');
 
-        $suratKeluar = Disposisi::with('suratMasuk')
-            ->where('status_keputusan', 'Diterima')
+        $suratKeluar = (clone $baseQuery)
+            ->with('suratMasuk')
             ->whereIn('status_surat_keluar', ['Menunggu', 'Draft'])
             ->latest('updated_at')
             ->get();
@@ -36,8 +36,7 @@ class SuratKeluarController extends Controller
      */
     public function create(Disposisi $disposisi)
     {
-        // Hanya yang statusnya Diterima yang bisa dibuat surat balasannya
-        if ($disposisi->status_keputusan !== 'Diterima') {
+        if (!$this->isAcceptedDisposisi($disposisi)) {
             return redirect()
                 ->route('sekretariat.surat-keluar.index')
                 ->with('error', 'Hanya disposisi yang diterima yang bisa dibuat surat balasan.');
@@ -68,7 +67,7 @@ class SuratKeluarController extends Controller
      */
     public function edit(Disposisi $disposisi)
     {
-        if ($disposisi->status_keputusan !== 'Diterima') {
+        if (!$this->isAcceptedDisposisi($disposisi)) {
             return redirect()
                 ->route('sekretariat.surat-keluar.index')
                 ->with('error', 'Disposisi tidak valid untuk edit surat balasan.');
@@ -153,5 +152,10 @@ class SuratKeluarController extends Controller
             storage_path('app/public/' . $disposisi->file_pdf_balasan),
             $downloadName
         );
+    }
+
+    private function isAcceptedDisposisi(Disposisi $disposisi): bool
+    {
+        return $disposisi->status_keputusan === 'Diterima';
     }
 }

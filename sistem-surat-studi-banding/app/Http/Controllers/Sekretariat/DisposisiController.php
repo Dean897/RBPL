@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Sekretariat\StoreDisposisiRequest;
 use App\Models\Disposisi;
 use App\Models\SuratMasuk;
-use Illuminate\Http\Request;
 
 class DisposisiController extends Controller
 {
@@ -15,16 +14,7 @@ class DisposisiController extends Controller
      */
     public function tracking()
     {
-        $disposisis = Disposisi::with('suratMasuk')
-            ->latest('updated_at')
-            ->get();
-
-        $stats = [
-            'total'    => $disposisis->count(),
-            'menunggu' => $disposisis->where('status_keputusan', 'Menunggu')->count(),
-            'diterima' => $disposisis->where('status_keputusan', 'Diterima')->count(),
-            'ditolak'  => $disposisis->where('status_keputusan', 'Ditolak')->count(),
-        ];
+        [$disposisis, $stats] = $this->getTrackingPayload();
 
         return view('Sekretariat.disposisi.tracking', compact('disposisis', 'stats'));
     }
@@ -34,34 +24,7 @@ class DisposisiController extends Controller
      */
     public function trackingData()
     {
-        $disposisis = Disposisi::with('suratMasuk')
-            ->latest('updated_at')
-            ->get();
-
-        $stats = [
-            'total'    => $disposisis->count(),
-            'menunggu' => $disposisis->where('status_keputusan', 'Menunggu')->count(),
-            'diterima' => $disposisis->where('status_keputusan', 'Diterima')->count(),
-            'ditolak'  => $disposisis->where('status_keputusan', 'Ditolak')->count(),
-        ];
-
-        // Render kartu sebagai HTML partial
-        $html = '';
-        foreach ($disposisis as $disposisi) {
-            $html .= view('Sekretariat.disposisi._tracking-card', compact('disposisi'))->render();
-        }
-
-        if (empty($html)) {
-            $html = '<div class="col-12" id="empty-state">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body text-center py-5 text-muted">
-                        <i class="fas fa-inbox fa-3x mb-3"></i>
-                        <h5>Belum Ada Disposisi</h5>
-                        <p class="mb-0">Disposisi yang sudah dikirim ke Pimpinan akan muncul di sini.</p>
-                    </div>
-                </div>
-            </div>';
-        }
+        [, $stats, $html] = $this->getTrackingPayload();
 
         return response()->json([
             'stats' => $stats,
@@ -111,5 +74,41 @@ class DisposisiController extends Controller
         return redirect()
             ->route('sekretariat.surat-masuk.show', $suratMasuk->id)
             ->with('success', 'Lembar disposisi berhasil dibuat dan dikirim ke Pimpinan.');
+    }
+
+    /**
+     * Ambil data pelacakan disposisi yang dipakai oleh halaman dan endpoint JSON.
+     */
+    private function getTrackingPayload(): array
+    {
+        $disposisis = Disposisi::with('suratMasuk')
+            ->latest('updated_at')
+            ->get();
+
+        $stats = [
+            'total'    => $disposisis->count(),
+            'menunggu' => $disposisis->where('status_keputusan', 'Menunggu')->count(),
+            'diterima' => $disposisis->where('status_keputusan', 'Diterima')->count(),
+            'ditolak'  => $disposisis->where('status_keputusan', 'Ditolak')->count(),
+        ];
+
+        $html = '';
+        foreach ($disposisis as $disposisi) {
+            $html .= view('Sekretariat.disposisi._tracking-card', compact('disposisi'))->render();
+        }
+
+        if ($html === '') {
+            $html = '<div class="col-12" id="empty-state">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-5 text-muted">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <h5>Belum Ada Disposisi</h5>
+                        <p class="mb-0">Disposisi yang sudah dikirim ke Pimpinan akan muncul di sini.</p>
+                    </div>
+                </div>
+            </div>';
+        }
+
+        return [$disposisis, $stats, $html];
     }
 }

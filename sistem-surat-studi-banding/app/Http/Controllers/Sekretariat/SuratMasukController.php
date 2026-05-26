@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Sekretariat;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sekretariat\StoreSuratMasukRequest;
 use App\Models\SuratMasuk;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class SuratMasukController extends Controller
