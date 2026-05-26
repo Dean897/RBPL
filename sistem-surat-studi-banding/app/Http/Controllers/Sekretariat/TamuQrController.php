@@ -37,16 +37,10 @@ class TamuQrController extends Controller
      */
     public function index(): View
     {
-        // Statistik tamu hari ini
-        $stats = [
-            'total_hari_ini' => TamuQr::today()->count(),
-            'hadir' => TamuQr::today()->checkedIn()->count(),
-            'terdaftar' => TamuQr::today()->registered()->count(),
-            'tidak_hadir' => TamuQr::today()->absent()->count(),
-        ];
+        $stats = $this->getTodayStats();
 
         // Daftar tamu hari ini (newest first)
-        $tamu_list = TamuQr::today()
+        $tamu_list = $this->todayGuestsQuery()
             ->orderByDesc('created_at')
             ->paginate(10);
 
@@ -185,14 +179,9 @@ class TamuQrController extends Controller
      */
     public function monitoring(): JsonResponse
     {
-        $today_stats = [
-            'total' => TamuQr::today()->count(),
-            'hadir' => TamuQr::today()->checkedIn()->count(),
-            'terdaftar' => TamuQr::today()->registered()->count(),
-            'tidak_hadir' => TamuQr::today()->absent()->count(),
-        ];
+        $today_stats = $this->getTodayStats();
 
-        $recent_guests = TamuQr::today()
+        $recent_guests = $this->todayGuestsQuery()
             ->orderByDesc('waktu_registrasi')
             ->take(5)
             ->get(['id', 'nama_tamu', 'asal_instansi', 'status', 'waktu_registrasi', 'waktu_check_in']);
@@ -334,5 +323,22 @@ class TamuQrController extends Controller
                 'message' => 'Gagal hapus data: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    private function getTodayStats(): array
+    {
+        $todayQuery = TamuQr::today();
+
+        return [
+            'total_hari_ini' => $todayQuery->count(),
+            'hadir' => (clone $todayQuery)->checkedIn()->count(),
+            'terdaftar' => (clone $todayQuery)->registered()->count(),
+            'tidak_hadir' => (clone $todayQuery)->absent()->count(),
+        ];
+    }
+
+    private function todayGuestsQuery()
+    {
+        return TamuQr::today();
     }
 }

@@ -137,16 +137,7 @@
         <small class="text-muted">Pencarian cepat untuk mempercepat review.</small>
     </section>
 
-    @if ($errors->any())
-        <div class="alert alert-danger">
-            <strong><i class="fas fa-exclamation-triangle me-1"></i>Validasi gagal:</strong>
-            <ul class="mb-0 mt-2 ps-3">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+    <x-validation-errors title="Validasi gagal:" class="mb-3" />
 
     <section id="disposisi-list">
         @forelse ($disposisis as $disposisi)

@@ -58,17 +58,7 @@
                 </div>
                 <div class="card-body">
 
-                    {{-- Tampilkan error validasi --}}
-                    @if ($errors->any())
-                        <div class="alert alert-danger">
-                            <strong>Terjadi kesalahan!</strong> Silakan periksa kembali inputan Anda.
-                            <ul class="mb-0 mt-2">
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
+                    <x-validation-errors class="mb-3" />
 
                     <form action="{{ route('sekretariat.disposisi.store', $suratMasuk->id) }}" method="POST">
                         @csrf

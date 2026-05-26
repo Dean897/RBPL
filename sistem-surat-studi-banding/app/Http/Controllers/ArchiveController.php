@@ -83,13 +83,7 @@ class ArchiveController extends Controller
             $archive->archive_number = 'AR' . now()->format('Ymd') . str_pad($archive->id, 6, '0', STR_PAD_LEFT);
             $archive->save();
 
-            ActivityLog::create([
-                'user_id' => auth()->id(),
-                'action' => 'created',
-                'model_type' => Archive::class,
-                'model_id' => $archive->id,
-                'metadata' => json_encode(['title' => $archive->title]),
-            ]);
+            $this->logActivity($archive, 'created', ['title' => $archive->title]);
 
             DB::commit();
         } catch (\Exception $e) {
@@ -118,13 +112,7 @@ class ArchiveController extends Controller
     {
         $this->authorize('download', $archive);
 
-        ActivityLog::create([
-            'user_id' => auth()->id(),
-            'action' => 'downloaded',
-            'model_type' => Archive::class,
-            'model_id' => $archive->id,
-            'metadata' => json_encode(['file' => $archive->file_name]),
-        ]);
+        $this->logActivity($archive, 'downloaded', ['file' => $archive->file_name]);
 
         return Storage::disk('public')->download($archive->file_path, $archive->file_name);
     }
@@ -158,13 +146,7 @@ class ArchiveController extends Controller
         $archive->allowed_roles = $request->input('allowed_roles', []);
         $archive->save();
 
-        ActivityLog::create([
-            'user_id' => auth()->id(),
-            'action' => 'updated',
-            'model_type' => Archive::class,
-            'model_id' => $archive->id,
-            'metadata' => json_encode(['title' => $archive->title]),
-        ]);
+        $this->logActivity($archive, 'updated', ['title' => $archive->title]);
 
         return redirect()->route('archives.index')->with('success', 'Arsip diperbarui.');
     }
@@ -173,13 +155,7 @@ class ArchiveController extends Controller
     {
         $this->authorize('delete', $archive);
 
-        ActivityLog::create([
-            'user_id' => auth()->id(),
-            'action' => 'deleted',
-            'model_type' => Archive::class,
-            'model_id' => $archive->id,
-            'metadata' => json_encode(['title' => $archive->title]),
-        ]);
+        $this->logActivity($archive, 'deleted', ['title' => $archive->title]);
 
         Storage::disk('public')->delete($archive->file_path);
         $archive->delete();
@@ -192,5 +168,16 @@ class ArchiveController extends Controller
         $this->authorize('view', $archive);
         // simple print view that embeds the PDF
         return view('archives.print', compact('archive'));
+    }
+
+    private function logActivity(Archive $archive, string $action, array $metadata): void
+    {
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'action' => $action,
+            'model_type' => Archive::class,
+            'model_id' => $archive->id,
+            'metadata' => json_encode($metadata),
+        ]);
     }
 }

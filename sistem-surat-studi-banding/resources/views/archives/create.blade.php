@@ -4,15 +4,7 @@
     <div class="container">
         <h1>Tambah Arsip</h1>
 
-        @if ($errors->any())
-            <div class="alert alert-danger">
-                <ul>
-                    @foreach ($errors->all() as $err)
-                        <li>{{ $err }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+        <x-validation-errors class="mb-3" />
 
         <form action="{{ route('archives.store') }}" method="POST" enctype="multipart/form-data">
             @csrf

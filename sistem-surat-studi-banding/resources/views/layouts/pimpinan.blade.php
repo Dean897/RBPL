@@ -124,19 +124,8 @@
     </header>
 
     <main class="container content-wrap">
-        @if (session('success'))
-            <div class="alert alert-success alert-dismissible fade show flash-card" role="alert">
-                <i class="fas fa-check-circle me-1"></i> {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-
-        @if (session('error'))
-            <div class="alert alert-danger alert-dismissible fade show flash-card" role="alert">
-                <i class="fas fa-exclamation-circle me-1"></i> {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
+        <x-flash-message type="success" class="flash-card mb-3" />
+        <x-flash-message type="error" class="flash-card mb-3" />
 
         @yield('content')
     </main>
