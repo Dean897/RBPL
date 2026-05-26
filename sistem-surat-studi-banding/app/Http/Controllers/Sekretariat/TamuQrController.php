@@ -7,8 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -90,27 +90,23 @@ class TamuQrController extends Controller
                 'no_telepon' => $validated['no_telepon'] ?? null,
                 'waktu_registrasi' => now(),
                 'status' => 'terdaftar',
-                'created_by' => auth()->id(),
-                'updated_by' => auth()->id(),
+                'created_by' => Auth::id(),
+                'updated_by' => Auth::id(),
             ]);
 
-            // Generate QR code image
-            $qr_path = 'qr-code/' . $qr_code . '.png';
-            $qr_content = json_encode([
-                'uuid' => $qr_code,
-                'nama' => $validated['nama_tamu'],
-                'asal' => $validated['asal_instansi'],
-                'timestamp' => now()->toIso8601String(),
-            ]);
+            // Build a check-in URL so scanning QR opens a public check-in endpoint.
+            // Prefer the configured APP_URL so the QR can point to a LAN IP or a tunnel (ngrok).
+            $base = rtrim(config('app.url', url('/')), '/');
+            $checkinUrl = $base . '/tamu/checkin/' . $qr_code;
 
-            $qr_image = QrCode::format('png')
-                ->size(300)
-                ->generate($qr_content);
+            // QR content will be the check-in URL (so guests scanning will be directed)
+            $qr_content = $checkinUrl;
 
-            Storage::disk('public')->put($qr_path, $qr_image);
+            // Use a URL-based QR generator so the feature does not depend on ext-gd
+            $qr_image = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($qr_content);
 
-            // Update foto_qr path
-            $tamu->update(['foto_qr' => Storage::url($qr_path)]);
+            // Store the QR image URL for display/download
+            $tamu->update(['foto_qr' => $qr_image]);
 
             return response()->json([
                 'success' => true,
@@ -164,7 +160,7 @@ class TamuQrController extends Controller
             }
 
             // Mark as checked in
-            $tamu->markAsCheckedIn(auth()->id());
+            $tamu->markAsCheckedIn(Auth::id());
 
             return response()->json([
                 'success' => true,
@@ -267,7 +263,7 @@ class TamuQrController extends Controller
         try {
             $tamuQr->update([
                 'status' => $validated['status'],
-                'updated_by' => auth()->id(),
+                'updated_by' => Auth::id(),
             ]);
 
             // Set waktu check-in jika status berubah ke hadir
@@ -286,6 +282,31 @@ class TamuQrController extends Controller
                 'message' => 'Gagal update status: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Public check-in endpoint used when a guest scans their QR code.
+     * Route: GET /tamu/checkin/{qr}
+     */
+    public function publicCheckIn(string $qr): View
+    {
+        $tamu = TamuQr::where('qr_code', $qr)->first();
+
+        if (!$tamu) {
+            return view('Sekretariat.BukuTamu.public_checkin', ['message' => 'QR code tidak ditemukan.']);
+        }
+
+        if ($tamu->isCheckedIn()) {
+            return view('Sekretariat.BukuTamu.public_checkin', ['tamu' => $tamu, 'message' => 'Anda sudah melakukan check-in.']);
+        }
+
+        $tamu->update([
+            'status' => 'hadir',
+            'waktu_check_in' => now(),
+            'updated_by' => null,
+        ]);
+
+        return view('Sekretariat.BukuTamu.public_checkin', ['tamu' => $tamu, 'message' => 'Check-in berhasil. Terima kasih!']);
     }
 
     /**

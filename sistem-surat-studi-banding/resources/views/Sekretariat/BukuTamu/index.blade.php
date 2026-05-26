@@ -137,6 +137,10 @@
                                                 Check-in
                                             </button>
                                         @endif
+                                        <button onclick="deleteTamu({{ $tamu->id }})"
+                                            class="text-red-600 hover:text-red-900 ml-3">
+                                            Hapus
+                                        </button>
                                     </td>
                                 </tr>
                             @empty
@@ -159,8 +163,10 @@
     </div>
 
     <!-- Modal Detail Tamu -->
-    <div id="detailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+    <div id="detailModal"
+        class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 items-start sm:items-center justify-center overflow-y-auto p-4">
+        <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 my-4 max-h-[calc(100vh-2rem)] overflow-y-auto overscroll-contain"
+            onclick="event.stopPropagation()">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-semibold">Detail Tamu</h3>
                 <button onclick="closeDetail()" class="text-gray-400 hover:text-gray-600">
@@ -209,17 +215,60 @@
                                 <label class="text-gray-600 text-sm">Waktu Check-in</label>
                                 <p class="font-semibold text-gray-900">${tamu.waktu_check_in ? new Date(tamu.waktu_check_in).toLocaleString('id-ID') : '-'}</p>
                             </div>
+                            <div class="col-span-2">
+                                <label class="text-gray-600 text-sm">QR Code</label>
+                                <p class="font-semibold text-gray-900 break-all">${tamu.qr_code || '-'}</p>
+                            </div>
+                            <div class="col-span-2">
+                                <label class="text-gray-600 text-sm">QR Image</label>
+                                ${tamu.foto_qr ? `<img src="${tamu.foto_qr}" alt="QR Code" class="mt-2 w-48 h-48 border rounded-lg p-2 bg-white">` : '<p class="font-semibold text-gray-900">-</p>'}
+                            </div>
                         </div>
                     `;
                     document.getElementById('detailContent').innerHTML = html;
-                    document.getElementById('detailModal').classList.remove('hidden');
+                    const detailModal = document.getElementById('detailModal');
+                    detailModal.style.display = 'flex';
+                    detailModal.classList.remove('hidden');
                 })
                 .catch(err => alert('Error: ' + err.message));
         }
 
         function closeDetail() {
-            document.getElementById('detailModal').classList.add('hidden');
+            const detailModal = document.getElementById('detailModal');
+            detailModal.style.display = 'none';
+            detailModal.classList.add('hidden');
         }
+
+        function deleteTamu(id) {
+            if (!confirm('Hapus data tamu ini?')) return;
+
+            fetch(`/api/sekretariat/buku-tamu/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    }
+                })
+                .then(async res => {
+                    const contentType = res.headers.get('content-type') || '';
+                    const data = contentType.includes('application/json') ? await res.json() : {
+                        success: false,
+                        message: await res.text()
+                    };
+                    alert(data.message || (data.success ? 'Data berhasil dihapus' : 'Gagal menghapus data'));
+                    if (data.success) location.reload();
+                })
+                .catch(err => alert('Error: ' + err.message));
+        }
+
+        document.getElementById('detailModal').addEventListener('click', closeDetail);
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                closeDetail();
+            }
+        });
 
         function checkIn(qrCode) {
             if (!confirm('Lakukan check-in untuk tamu ini?')) return;

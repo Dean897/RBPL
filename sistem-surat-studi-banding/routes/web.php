@@ -25,6 +25,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Public check-in endpoint for guests (scanning QR will open this)
+Route::get('/tamu/checkin/{qr}', [App\Http\Controllers\Sekretariat\TamuQrController::class, 'publicCheckIn'])->name('tamu.public-checkin');
+
 Route::get('/dashboard', function () {
     $role = Auth::user()->role ?? 'eksternal';
 

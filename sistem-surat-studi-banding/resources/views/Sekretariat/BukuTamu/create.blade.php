@@ -155,12 +155,20 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                     },
                     body: JSON.stringify(formData)
                 });
 
-                const data = await response.json();
+                const contentType = response.headers.get('content-type') || '';
+                const data = contentType.includes('application/json') ?
+                    await response.json() :
+                    {
+                        success: false,
+                        message: await response.text()
+                    };
 
                 if (data.success) {
                     // Tampilkan hasil
