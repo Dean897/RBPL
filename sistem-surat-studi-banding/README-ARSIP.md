@@ -7,6 +7,15 @@ Ringkasan:
 - Role-based access untuk dokumen private
 - Audit log aktivitas (create/update/download/delete)
 
+Sprint 3 — Pengarsipan & Audit Log (Target: 10 SP)
+
+- PBI-021: Implementasi sistem pengarsipan otomatis — 4 SP — Done. Sumber: https://github.com/Dean897/RBPL/commit/c70ea075d38c6ed5c12f2db917dd8d3832606599
+- PBI-022: Implementasi fitur Audit Log (pencatat aktivitas) — 3 SP — Done.
+- PBI-023: Fitur manajemen dokumen pendukung (Agenda/Absensi) — 2 SP — Done.
+- PBI-024: Testing modul arsip dan log — 1 SP — Done.
+
+Status: Semua tugas Sprint 3 untuk modul arsip telah diimplementasikan dan diuji.
+
 Struktur penting:
 
 - `app/Models/Archive.php` — Model arsip
