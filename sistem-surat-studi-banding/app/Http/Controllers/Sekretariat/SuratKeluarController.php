@@ -4,8 +4,14 @@ namespace App\Http\Controllers\Sekretariat;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sekretariat\StoreSuratKeluarRequest;
+use App\Models\ActivityLog;
+use App\Models\Archive;
 use App\Models\Disposisi;
 use App\Services\PdfGeneratorService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class SuratKeluarController extends Controller
 {
@@ -14,7 +20,7 @@ class SuratKeluarController extends Controller
      */
     public function index()
     {
-        $baseQuery = Disposisi::query()->where('status_keputusan', 'Diterima');
+        $baseQuery = Disposisi::query()->whereIn('status_keputusan', ['Diterima', 'Ditolak']);
 
         $suratKeluar = (clone $baseQuery)
             ->with('suratMasuk')
@@ -36,10 +42,10 @@ class SuratKeluarController extends Controller
      */
     public function create(Disposisi $disposisi)
     {
-        if (!$this->isAcceptedDisposisi($disposisi)) {
+        if (!$this->isDecidedDisposisi($disposisi)) {
             return redirect()
                 ->route('sekretariat.surat-keluar.index')
-                ->with('error', 'Hanya disposisi yang diterima yang bisa dibuat surat balasan.');
+                ->with('error', 'Hanya disposisi yang sudah diputuskan yang bisa dibuat surat balasan.');
         }
 
         return view('Sekretariat.surat-keluar.create', compact('disposisi'));
@@ -67,7 +73,7 @@ class SuratKeluarController extends Controller
      */
     public function edit(Disposisi $disposisi)
     {
-        if (!$this->isAcceptedDisposisi($disposisi)) {
+        if (!$this->isDecidedDisposisi($disposisi)) {
             return redirect()
                 ->route('sekretariat.surat-keluar.index')
                 ->with('error', 'Disposisi tidak valid untuk edit surat balasan.');
@@ -95,13 +101,22 @@ class SuratKeluarController extends Controller
     /**
      * Generate PDF dan tandai sebagai Terkirim.
      */
-    public function generateAndSend(Disposisi $disposisi, PdfGeneratorService $pdfService)
+    public function generateAndSend(Request $request, Disposisi $disposisi, PdfGeneratorService $pdfService)
     {
         if ($disposisi->status_surat_keluar === 'Terkirim') {
             return redirect()
                 ->route('sekretariat.surat-keluar.index')
                 ->with('error', 'Surat ini sudah dikirim sebelumnya.');
         }
+
+        $validated = $request->validate([
+            'isi_surat_balasan' => ['required', 'string'],
+        ]);
+
+        $disposisi->update([
+            'isi_surat_balasan' => $validated['isi_surat_balasan'],
+            'status_surat_keluar' => 'Draft',
+        ]);
 
         if (!$disposisi->isi_surat_balasan) {
             return redirect()
@@ -110,13 +125,23 @@ class SuratKeluarController extends Controller
         }
 
         try {
-            $pdfPath = $pdfService->generateSuratBalasan($disposisi);
+            $pdfPath = $disposisi->file_pdf_balasan;
+
+            if (!$pdfPath) {
+                $pdfPath = $pdfService->generateSuratBalasan($disposisi);
+
+                $disposisi->update([
+                    'file_pdf_balasan' => $pdfPath,
+                ]);
+            }
 
             $disposisi->update([
-                'file_pdf_balasan' => $pdfPath,
                 'status_surat_keluar' => 'Terkirim',
                 'tgl_kirim_surat' => now(),
             ]);
+
+            // Ensure final outgoing document is archived as surat-keluar.
+            $this->createSuratKeluarArchiveIfMissing($disposisi);
 
             // Update status surat masuk
             $disposisi->suratMasuk->update(['status' => 'Selesai']);
@@ -154,8 +179,68 @@ class SuratKeluarController extends Controller
         );
     }
 
-    private function isAcceptedDisposisi(Disposisi $disposisi): bool
+    private function isDecidedDisposisi(Disposisi $disposisi): bool
     {
-        return $disposisi->status_keputusan === 'Diterima';
+        return in_array($disposisi->status_keputusan, ['Diterima', 'Ditolak'], true);
+    }
+
+    private function createSuratKeluarArchiveIfMissing(Disposisi $disposisi): void
+    {
+        try {
+            $filePath = $disposisi->file_pdf_balasan;
+            if (!$filePath) {
+                return;
+            }
+
+            $alreadyArchived = Archive::where('category', 'surat-keluar')
+                ->where('file_path', $filePath)
+                ->exists();
+
+            if ($alreadyArchived) {
+                return;
+            }
+
+            $disk = Storage::disk('public');
+            if (!$disk->exists($filePath)) {
+                return;
+            }
+
+            $suratMasuk = $disposisi->suratMasuk;
+            $pemohonName = $suratMasuk?->pengirim?->name ?? 'Pemohon';
+            $instansiName = $suratMasuk?->instansi ?? 'Instansi';
+            $fileName = basename($filePath);
+
+            $archive = Archive::create([
+                'archive_number' => '',
+                'title' => $pemohonName . ' - ' . $instansiName,
+                'category' => 'surat-keluar',
+                'description' => 'Surat balasan final yang dikirim ke pihak eksternal.',
+                'file_path' => $filePath,
+                'file_name' => $fileName,
+                'file_size' => $disk->size($filePath),
+                'mime_type' => 'application/pdf',
+                'archived_at' => now(),
+                'uploaded_by' => Auth::id(),
+                'is_private' => false,
+                'allowed_roles' => [],
+            ]);
+
+            $archive->archive_number = 'AR' . now()->format('Ymd') . str_pad($archive->id, 6, '0', STR_PAD_LEFT);
+            $archive->save();
+
+            ActivityLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'created',
+                'model_type' => Archive::class,
+                'model_id' => $archive->id,
+                'metadata' => json_encode([
+                    'source' => 'SuratKeluarController',
+                    'disposisi_id' => $disposisi->id,
+                    'file' => $fileName,
+                ]),
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Failed creating surat-keluar archive: ' . $e->getMessage());
+        }
     }
 }

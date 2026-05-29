@@ -52,7 +52,8 @@
                                 @method('PATCH')
 
                                 <label class="form-label fw-semibold">Isi Surat Balasan</label>
-                                <textarea name="isi_surat_balasan" rows="12" class="form-control @error('isi_surat_balasan') is-invalid @enderror">{{ old('isi_surat_balasan', $disposisi->isi_surat_balasan) }}</textarea>
+                                <textarea id="isi_surat_balasan" name="isi_surat_balasan" rows="12" required
+                                    class="form-control @error('isi_surat_balasan') is-invalid @enderror">{{ old('isi_surat_balasan', $disposisi->isi_surat_balasan) }}</textarea>
                                 @error('isi_surat_balasan')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
@@ -68,7 +69,9 @@
                             <form action="{{ route('sekretariat.surat-keluar.send', $disposisi->id) }}" method="POST"
                                 class="mt-2">
                                 @csrf
-                                <button type="submit" class="btn btn-success"
+                                <input type="hidden" id="isi_surat_balasan_hidden" name="isi_surat_balasan"
+                                    value="{{ old('isi_surat_balasan', $disposisi->isi_surat_balasan) }}">
+                                <button id="btn-kirim" type="submit" class="btn btn-success"
                                     onclick="return confirm('Yakin ingin membuat PDF dan mengirim ke pemohon?')">
                                     <i class="fas fa-paper-plane me-1"></i>Buat PDF & Kirim
                                 </button>
@@ -104,4 +107,33 @@
             </div>
         </div>
     </div>
+@endsection
+
+@section('scripts')
+    <script>
+        (function() {
+            const isiBalasan = document.getElementById('isi_surat_balasan');
+            const btnKirim = document.getElementById('btn-kirim');
+            const isiBalasanHidden = document.getElementById('isi_surat_balasan_hidden');
+
+            function syncHiddenContent() {
+                if (!isiBalasan || !isiBalasanHidden) return;
+                isiBalasanHidden.value = isiBalasan.value;
+            }
+
+            function syncSendButtonState() {
+                if (!isiBalasan || !btnKirim) return;
+                const hasContent = (isiBalasan.value || '').trim().length > 0;
+                btnKirim.disabled = !hasContent;
+                btnKirim.title = hasContent ? '' : 'Isi surat balasan terlebih dahulu sebelum mengirim.';
+            }
+
+            syncHiddenContent();
+            syncSendButtonState();
+            isiBalasan?.addEventListener('input', function() {
+                syncHiddenContent();
+                syncSendButtonState();
+            });
+        })();
+    </script>
 @endsection

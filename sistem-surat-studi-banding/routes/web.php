@@ -109,10 +109,25 @@ Route::middleware(['auth'])->group(function () {
     })->name('profile.password');
 
     // Arsip Digital
-    Route::resource('archives', ArchiveController::class);
+    Route::get('archives', [ArchiveController::class, 'index'])->name('archives.index');
+    Route::get('archives/{archive}', [ArchiveController::class, 'show'])->name('archives.show');
+    Route::delete('archives/{archive}', [ArchiveController::class, 'destroy'])->name('archives.destroy');
+    Route::get('archives/{archive}/preview-raw', [ArchiveController::class, 'previewRaw'])->name('archives.preview-raw');
     Route::get('archives/{archive}/preview', [ArchiveController::class, 'preview'])->name('archives.preview');
     Route::get('archives/{archive}/download', [ArchiveController::class, 'download'])->name('archives.download');
     Route::get('archives/{archive}/print', [ArchiveController::class, 'print'])->name('archives.print');
+
+    // Activity Logs
+    Route::get('activity-logs', [App\Http\Controllers\ActivityLogController::class, 'index'])->name('activity-logs.index');
+
+    // Agenda & Absensi (dokumen pendukung)
+    Route::get('agendas', [App\Http\Controllers\AgendaController::class, 'index'])->name('agendas.index');
+    Route::get('agendas/create', [App\Http\Controllers\AgendaController::class, 'create'])->name('agendas.create');
+    Route::post('agendas', [App\Http\Controllers\AgendaController::class, 'store'])->name('agendas.store');
+
+    Route::get('attendances', [App\Http\Controllers\AttendanceController::class, 'index'])->name('attendances.index');
+    Route::get('attendances/create', [App\Http\Controllers\AttendanceController::class, 'create'])->name('attendances.create');
+    Route::post('attendances', [App\Http\Controllers\AttendanceController::class, 'store'])->name('attendances.store');
 });
 
 require __DIR__ . '/auth.php';

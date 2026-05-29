@@ -10,9 +10,6 @@
                     <h4 class="mb-1">Arsip Digital</h4>
                     <p class="text-muted mb-0">Kelola, cari, dan unduh dokumen arsip dengan cepat.</p>
                 </div>
-                <a href="{{ route('archives.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i> Tambah Arsip
-                </a>
             </div>
         </div>
 
@@ -28,9 +25,10 @@
                         <label class="form-label">Kategori</label>
                         <select name="category" class="form-select">
                             <option value="">Semua Kategori</option>
-                            <option value="surat" @selected(request('category') === 'surat')>Surat</option>
+                            <option value="surat-masuk" @selected(request('category') === 'surat-masuk')>Surat Masuk</option>
+                            <option value="surat-keluar" @selected(request('category') === 'surat-keluar')>Surat Keluar</option>
+                            <option value="surat-disposisi" @selected(request('category') === 'surat-disposisi')>Surat Disposisi</option>
                             <option value="dokumen" @selected(request('category') === 'dokumen')>Dokumen</option>
-                            <option value="laporan" @selected(request('category') === 'laporan')>Laporan</option>
                             <option value="lainnya" @selected(request('category') === 'lainnya')>Lainnya</option>
                         </select>
                     </div>
@@ -38,8 +36,13 @@
                         <label class="form-label">Dari Tanggal</label>
                         <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
                     </div>
-                    <div class="col-md-2 d-flex align-items-end gap-2">
-                        <button type="submit" class="btn btn-success w-100">Cari</button>
+                    <div class="col-md-2">
+                        <label class="form-label">Sampai Tanggal</label>
+                        <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
+                    </div>
+                    <div class="col-md-12 d-flex align-items-end gap-2 justify-content-end">
+                        <a href="{{ route('archives.index') }}" class="btn btn-outline-secondary">Reset</a>
+                        <button type="submit" class="btn btn-success">Cari</button>
                     </div>
                 </form>
             </div>
@@ -62,7 +65,17 @@
                             <tr>
                                 <td class="fw-semibold">{{ $a->archive_number }}</td>
                                 <td>{{ $a->title }}</td>
-                                <td><span class="badge text-bg-secondary">{{ $a->category }}</span></td>
+                                <td>
+                                    @php
+                                        $labels = [
+                                            'surat-masuk' => 'Surat Masuk',
+                                            'surat-keluar' => 'Surat Keluar',
+                                            'surat-disposisi' => 'Surat Disposisi',
+                                        ];
+                                    @endphp
+                                    <span
+                                        class="badge text-bg-secondary">{{ $labels[$a->category] ?? ucfirst($a->category) }}</span>
+                                </td>
                                 <td>{{ $a->archived_at?->format('d M Y') }}</td>
                                 <td class="text-nowrap">
                                     <a href="{{ route('archives.show', $a) }}"
@@ -71,8 +84,6 @@
                                         class="btn btn-sm btn-outline-info">Preview</a>
                                     <a href="{{ route('archives.download', $a) }}"
                                         class="btn btn-sm btn-outline-success">Download</a>
-                                    <a href="{{ route('archives.edit', $a) }}"
-                                        class="btn btn-sm btn-outline-warning">Edit</a>
                                     <form action="{{ route('archives.destroy', $a) }}" method="POST" class="d-inline">
                                         @csrf
                                         @method('DELETE')

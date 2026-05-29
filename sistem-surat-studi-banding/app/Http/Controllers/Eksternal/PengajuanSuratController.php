@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Eksternal;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Eksternal\StorePengajuanSuratRequest;
+use App\Models\ActivityLog;
+use App\Models\Archive;
 use App\Models\SuratMasuk;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class PengajuanSuratController extends Controller
 {
@@ -25,9 +28,10 @@ class PengajuanSuratController extends Controller
         $validated = $request->validated();
 
         // Upload file PDF
-        $filePath = $request->file('file_pdf')->store('surat-masuk', 'public');
+        $file = $request->file('file_pdf');
+        $filePath = $file->store('surat-masuk', 'public');
 
-        SuratMasuk::create([
+        $suratMasuk = SuratMasuk::create([
             'user_id'       => Auth::id(),
             'no_surat'      => $validated['no_surat'],
             'instansi'      => $validated['instansi'],
@@ -36,6 +40,43 @@ class PengajuanSuratController extends Controller
             'status'        => 'Menunggu Verifikasi',
             'file_pdf'      => $filePath,
         ]);
+
+        // Auto-archive each incoming submission from eksternal side.
+        try {
+            $pemohonName = Auth::user()?->name ?? 'Pemohon';
+            $instansiName = $validated['instansi'] ?? 'Instansi';
+
+            $archive = Archive::create([
+                'archive_number' => '',
+                'title' => $pemohonName . ' - ' . $instansiName,
+                'category' => 'surat-masuk',
+                'description' => $validated['perihal'] ?? null,
+                'file_path' => $filePath,
+                'file_name' => $file->getClientOriginalName(),
+                'file_size' => $file->getSize(),
+                'mime_type' => $file->getClientMimeType(),
+                'archived_at' => now(),
+                'uploaded_by' => Auth::id(),
+                'is_private' => false,
+                'allowed_roles' => [],
+            ]);
+
+            $archive->archive_number = 'AR' . now()->format('Ymd') . str_pad($archive->id, 6, '0', STR_PAD_LEFT);
+            $archive->save();
+
+            ActivityLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'created',
+                'model_type' => Archive::class,
+                'model_id' => $archive->id,
+                'metadata' => json_encode([
+                    'source' => 'PengajuanSuratController',
+                    'surat_id' => $suratMasuk->id,
+                ]),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Auto-archive for eksternal surat masuk failed: ' . $e->getMessage());
+        }
 
         return redirect()
             ->route('eksternal.dashboard')

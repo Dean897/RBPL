@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Sekretariat;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sekretariat\StoreSuratMasukRequest;
 use App\Models\SuratMasuk;
+use App\Models\Archive;
+use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class SuratMasukController extends Controller
 {
@@ -33,9 +36,10 @@ class SuratMasukController extends Controller
         $validated = $request->validated();
 
         // Upload file PDF
-        $filePath = $request->file('file_pdf')->store('surat-masuk', 'public');
+        $file = $request->file('file_pdf');
+        $filePath = $file->store('surat-masuk', 'public');
 
-        SuratMasuk::create([
+        $surat = SuratMasuk::create([
             'user_id'        => Auth::id(),
             'no_surat'       => $validated['no_surat'],
             'instansi'       => $validated['instansi'],
@@ -45,6 +49,40 @@ class SuratMasukController extends Controller
             'status'         => 'Menunggu Verifikasi',
             'file_pdf'       => $filePath,
         ]);
+
+        // Create archive record automatically for incoming mail
+        try {
+            $pemohonName = $surat->pengirim?->name ?? Auth::user()?->name ?? 'Pemohon';
+            $instansiName = $validated['instansi'] ?? $surat->instansi ?? 'Instansi';
+
+            $archive = Archive::create([
+                'archive_number' => '',
+                'title' => $pemohonName . ' - ' . $instansiName,
+                'category' => 'surat-masuk',
+                'description' => $validated['perihal'] ?? null,
+                'file_path' => $filePath,
+                'file_name' => $file->getClientOriginalName(),
+                'file_size' => $file->getSize(),
+                'mime_type' => $file->getClientMimeType(),
+                'archived_at' => now(),
+                'uploaded_by' => Auth::id(),
+                'is_private' => false,
+                'allowed_roles' => [],
+            ]);
+
+            $archive->archive_number = 'AR' . now()->format('Ymd') . str_pad($archive->id, 6, '0', STR_PAD_LEFT);
+            $archive->save();
+
+            ActivityLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'created',
+                'model_type' => Archive::class,
+                'model_id' => $archive->id,
+                'metadata' => json_encode(['source' => 'SuratMasukController', 'surat_id' => $surat->id]),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Auto-archive for surat masuk failed: ' . $e->getMessage());
+        }
 
         return redirect()
             ->route('sekretariat.surat-masuk.index')
@@ -84,7 +122,10 @@ class SuratMasukController extends Controller
     {
         $downloadName = 'surat-masuk-' . $suratMasuk->no_surat . '.pdf';
 
-        return Storage::disk('public')->download($suratMasuk->file_pdf, $downloadName);
+        return response()->download(
+            storage_path('app/public/' . $suratMasuk->file_pdf),
+            $downloadName
+        );
     }
 
     /**
@@ -120,6 +161,19 @@ class SuratMasukController extends Controller
         }
 
         $suratMasuk->update(['status' => 'Menunggu Disposisi']);
+
+        // Log verification action
+        try {
+            ActivityLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'verified',
+                'model_type' => SuratMasuk::class,
+                'model_id' => $suratMasuk->id,
+                'metadata' => json_encode(['status' => 'Menunggu Disposisi']),
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('ActivityLog create failed on verify: ' . $e->getMessage());
+        }
 
         return redirect()
             ->route('sekretariat.surat-masuk.show', $suratMasuk->id)

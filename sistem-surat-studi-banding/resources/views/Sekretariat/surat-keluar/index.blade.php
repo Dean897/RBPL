@@ -8,7 +8,8 @@
             <div>
                 <div class="small text-uppercase fw-semibold opacity-75 mb-1">Sekretariat • Surat Keluar</div>
                 <h4 class="fw-bold mb-1 text-white">Manajemen Surat Keluar</h4>
-                <p class="mb-0 text-white-50">Kelola pembuatan dan pengiriman surat balasan untuk permohonan studi banding.
+                <p class="mb-0 text-white-50">Kelola pembuatan dan pengiriman surat balasan untuk disposisi yang sudah
+                    diputuskan.
                 </p>
             </div>
         </div>
@@ -63,7 +64,7 @@
     <!-- Daftar Surat -->
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white py-3 border-bottom">
-            <h5 class="mb-0 fw-semibold">Surat Menunggu dan Draft Balasan</h5>
+            <h5 class="mb-0 fw-semibold">Surat Diputuskan dan Draft Balasan</h5>
         </div>
         <div class="card-body">
             @forelse ($suratKeluar as $item)
@@ -79,22 +80,29 @@
                             {{ \Carbon\Carbon::parse($item->tgl_disposisi)->format('d M Y') }}
                         </small>
                         <div class="mt-2">
+                            @php
+                                $decisionBadge = $item->status_keputusan === 'Diterima' ? 'bg-success' : 'bg-danger';
+                            @endphp
+                            <span class="badge {{ $decisionBadge }} me-1">{{ $item->status_keputusan }}</span>
                             <span
                                 class="badge {{ $item->status_surat_keluar === 'Draft' ? 'bg-info' : 'bg-warning text-dark' }}">
                                 {{ $item->status_surat_keluar }}
                             </span>
+                            @if ($item->status_surat_keluar === 'Draft' && $item->file_pdf_balasan)
+                                <span class="badge bg-secondary ms-1">Wajib Review Isi</span>
+                            @endif
                         </div>
                     </div>
                     <div class="col-md-4 text-end">
                         @if ($item->status_surat_keluar === 'Draft')
                             <a href="{{ route('sekretariat.surat-keluar.edit', $item->id) }}"
                                 class="btn btn-sm btn-info text-white">
-                                <i class="fas fa-file-edit me-1"></i>Lanjutkan Draft
+                                <i class="fas fa-file-edit me-1"></i>Isi / Lanjutkan Balasan
                             </a>
                         @else
                             <a href="{{ route('sekretariat.surat-keluar.create', $item->id) }}"
                                 class="btn btn-sm btn-primary">
-                                <i class="fas fa-pen me-1"></i>Buat Balasan
+                                <i class="fas fa-pen me-1"></i>Isi Balasan
                             </a>
                         @endif
                     </div>
