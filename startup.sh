@@ -4,6 +4,10 @@ set -eu
 # Ensure we are in the deployed app root.
 cd /home/site/wwwroot
 
+# Ensure Laravel writable/cache directories exist.
+mkdir -p storage/framework/views storage/framework/cache storage/framework/sessions bootstrap/cache
+chmod -R 775 storage bootstrap/cache || true
+
 # Install PHP dependencies when vendor does not exist (Zip Deploy scenario).
 if [ ! -d vendor ]; then
   composer install --no-dev --optimize-autoloader --no-interaction
