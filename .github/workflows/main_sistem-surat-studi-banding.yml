@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy PHP app to Azure Web App - Sistem-surat-studi-banding
+name: Build and deploy PHP app to Azure Web App - sistem-surat-studi-banding
 
 on:
   push:
@@ -56,15 +56,15 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_6C5C32316EE8495EAD41F845D727FCCA }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_200AC6E590E6454A8748CF0DA2BCBF96 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_2F2ECB6CA09B444A8CE2B2FAD96039D9 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_0CF01256250D43B1ADDB5566760C19B3 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_7AED47B013BD451FAE9799BD97CE117C }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_15B6C19679D54861A627EA36BAC54E30 }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
-          app-name: 'Sistem-surat-studi-banding'
+          app-name: 'sistem-surat-studi-banding'
           slot-name: 'Production'
           package: .
           
