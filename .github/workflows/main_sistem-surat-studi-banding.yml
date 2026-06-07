@@ -60,9 +60,23 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_200AC6E590E6454A8748CF0DA2BCBF96 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_2F2ECB6CA09B444A8CE2B2FAD96039D9 }}
 
-      - name: 'Deploy to Azure Web App'
+      - name: 'Deploy to Azure Web App (attempt 1)'
         uses: azure/webapps-deploy@v3
-        id: deploy-to-webapp
+        id: deploy-to-webapp-attempt-1
+        continue-on-error: true
+        with:
+          app-name: 'Sistem-surat-studi-banding'
+          slot-name: 'Production'
+          package: .
+
+      - name: Wait before retrying deploy
+        if: steps.deploy-to-webapp-attempt-1.outcome == 'failure'
+        run: sleep 30
+
+      - name: 'Deploy to Azure Web App (retry)'
+        if: steps.deploy-to-webapp-attempt-1.outcome == 'failure'
+        uses: azure/webapps-deploy@v3
+        id: deploy-to-webapp-attempt-2
         with:
           app-name: 'Sistem-surat-studi-banding'
           slot-name: 'Production'
