@@ -1,0 +1,22 @@
+server {
+    listen 8080;
+    listen [::]:8080;
+
+    # Mengarahkan root direktori ke folder public Laravel
+    root /home/site/wwwroot/public;
+    index index.php index.html index.htm;
+    server_name _;
+
+    location / {
+        # Ini adalah baris kunci agar routing Laravel berjalan
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # Konfigurasi standar Azure untuk memproses PHP
+    location ~ \.php$ {
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+}
